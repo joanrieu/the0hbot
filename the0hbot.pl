@@ -4,98 +4,97 @@
 
 # CONFIG
 
-$nick = 'the0hbot';
-$addr = '';
-$port = 6667;
-$channel = '';
+$bot_nickname = 'the0hbot';
+$server_address = '';
+$server_port = 6667;
+$server_channel = '';
 $owner_type = ''; # nickname / username / hostname
-$owner = '';
-$enemy = 'fBot';
+$owner_name = '';
+$enemy_nickname = '';
 
 # CODE
 
 use IO::Socket;
 
-my $sock = new IO::Socket::INET(
-        PeerAddr => $addr,
-        PeerPort => $port,
+my $server_socket = new IO::Socket::INET(
+        PeerAddr => $server_address,
+        PeerPort => $server_port,
         Proto => 'tcp',
 );
 
-die 'Could not connect!' unless $sock;
+die 'Could not connect!' unless $server_socket;
 
 $\ = "\r\n";
 
-print $sock "NICK $nick";
-print $sock "USER $nick 0 * :$nick";
+print $server_socket "NICK $bot_nickname";
+print $server_socket "USER $bot_nickname 0 * :$bot_nickname";
 
-while (<$sock>) {
+while (<$server_socket>) {
 
-        undef $prefix;
+        undef $command_prefix;
         if ($_ =~ s/^:([^ ]+) //) {
-                $prefix = $1;
-                $prefix =~ m/^([^!]+)!([^@]+)@(.+)$/;
-                %sender = ('nickname', $1, 'username', $2, 'hostname', $3);
+                $command_prefix = $1;
+                $command_prefix =~ m/^([^!]+)!([^@]+)@(.+)$/;
+                %command_sender = ('nickname', $1, 'username', $2, 'hostname', $3);
         }
 
         $_ =~ m/^([^ ]+)( ([^\r]+))\r?\n$/;
-        $command = $1;
-        $params = $3;
+        $command_name = $1;
+        $command_parameters = $3;
 
-        if ($command eq 'PING') {
-                print $sock "PONG $params";
-        } elsif ($command eq '001') {
-                print $sock "JOIN $channel";
-                $joined = 1;
-        } elsif ($command eq 'PRIVMSG') {
+        if ($command_name eq 'PING') {
+                print $server_socket "PONG $command_parameters";
+        } elsif ($command_name eq '001') {
+                print $server_socket "JOIN $server_channel";
+        } elsif ($command_name eq 'PRIVMSG') {
 
-                $params =~ m/^([^ ]+) :(.+)$/;
-                $channel = $1;
-                $text = $2;
+                $command_parameters =~ m/^([^ ]+) :(.+)$/;
+                $command_channel = $1;
+                $command_text = $2;
 
-                if ($text =~ m/^\.0 ([^ ]+)( (.+))?$/) {
+                if ($command_text =~ m/^\.0 ([^ ]+)( (.+))?$/) {
 
-                        $usercommand = $1;
-                        $userparams = $3;
+                        $usercommand_name = $1;
+                        $usercommand_parameters = $3;
 
-                        if ($usercommand eq 'echo' and defined $userparams) {
+                        if ($usercommand_name eq 'echo' and defined $usercommand_parameters) {
 
-                                print $sock "PRIVMSG $channel :$sender{'nickname'} said: $userparams";
+                                print $server_socket "PRIVMSG $command_channel :$command_sender{'nickname'} said: $usercommand_parameters";
 
-                        } elsif ($usercommand eq 'whoami') {
+                        } elsif ($usercommand_name eq 'whoami') {
 
-                                print $sock "PRIVMSG $channel :$sender{'nickname'}: You are $sender{'username'} ($sender{'hostname'}).";
+                                print $server_socket "PRIVMSG $command_channel :$command_sender{'nickname'}: You are $command_sender{'username'} ($command_sender{'hostname'}).";
 
-                        } elsif ($usercommand =~ m/^bye|restart$/) {
+                        } elsif ($usercommand_name =~ m/^bye|restart$/) {
 
-                                if ($sender{$owner_type} eq $owner) {
-                                        $quit = 'QUIT';
-                                        $quit .= " :$userparams" unless not defined $userparams;
-                                        print $sock $quit;
-                                        $sock->close();
-                                        if ($usercommand eq 'restart') {
+                                if ($command_sender{$owner_type} eq $owner_name) {
+                                        $reply = 'QUIT';
+                                        $reply .= " :$usercommand_parameters" unless not defined $usercommand_parameters;
+                                        print $server_socket $reply;
+                                        $server_socket->close();
+                                        if ($usercommand_name eq 'restart') {
                                                 exec($0);
                                         }
                                         exit;
                                 } else {
-                                        print $sock "PRIVMSG $channel :$sender{'nickname'}: Can't touch this!";
+                                        print $server_socket "PRIVMSG $command_channel :$command_sender{'nickname'}: Can't touch this!";
                                 }
 
                         }
 
-                } elsif ($text =~ m/^\01ACTION kicks $nick(.*)\01$/i) {
+                } elsif ($command_text =~ m/^\01ACTION kicks $bot_nickname(.*)\01$/i) {
 
                         $suffix = $1;
 
-                        print $sock "NICK hammer";
-                        print $sock "PRIVMSG $channel :\01ACTION nails $sender{'nickname'}$suffix\01";
-                        print $sock "NICK $nick";
+                        print $server_socket "NICK hammer";
+                        print $server_socket "PRIVMSG $command_channel :\01ACTION nails $command_sender{'nickname'}$suffix\01";
+                        print $server_socket "NICK $bot_nickname";
 
                 }
 
         }
 
-        if ($sender{'nickname'} eq $enemy) {
+        if ($command_sender{'nickname'} eq $enemy_nickname) {
 
                 @verbs = (
                         'kicks',
@@ -114,12 +113,11 @@ while (<$sock>) {
                 $verb = $verbs[rand() * scalar @verbs];
                 $ending = $endings[rand() * scalar @endings];
 
-                print $sock "PRIVMSG $channel :\01ACTION $verb $enemy, $ending!\01";
+                print $server_socket "PRIVMSG $server_channel :\01ACTION $verb $enemy_nickname, $ending!\01";
 
         }
 
 }
 
-close($sock);
-
+close($server_socket);
 die "Socket error!";
