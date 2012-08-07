@@ -64,17 +64,23 @@ while (<$sock>) {
                         $userparams = $3;
 
                         if ($usercommand eq 'echo') {
+                                $userparams = $usercommand unless defined $userparams;
                                 print $sock "PRIVMSG $channel :$sender{'nickname'} said: $userparams\r\n";
-                        } elsif ($usercommand eq 'bye' and $sender{$owner_type} eq $owner) {
-                                if (defined $userparams) {
-                                        print $sock "QUIT :$userparams\r\n";
+                        } elsif ($usercommand =~ m/^bye|restart$/) {
+                                if ($sender{$owner_type} eq $owner) {
+                                        if (defined $userparams) {
+                                                print $sock "QUIT :$userparams\r\n";
+                                        } else {
+                                                print $sock "QUIT\r\n";
+                                        }
+                                        $sock->close();
+                                        if ($usercommand eq 'restart') {
+                                                exec($0);
+                                        }
+                                        exit;
                                 } else {
-                                        print $sock "QUIT\r\n";
+                                        print $sock "PRIVMSG $channel :$sender{'nickname'}: Can't touch this!\r\n";
                                 }
-                                $sock->close();
-                                exit;
-                        } elsif ($usercommand eq 'bye') {
-                                print $sock "PRIVMSG $channel :$sender{'nickname'}: Can't touch this!\r\n";
                         }
 
                 }
