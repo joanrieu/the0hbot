@@ -33,6 +33,8 @@ while (<$sock>) {
         undef $prefix;
         if ($_ =~ s/^:([^ ]+) //) {
                 $prefix = $1;
+                $prefix =~ m/^([^!]+)!([^@]+)@(.+)$/;
+                %sender = ('nickname', $1, 'username', $2, 'hostname', $3);
         }
 
         $_ =~ m/^([^ ]+)( ([^\r]+))\r?\n$/;
@@ -50,18 +52,21 @@ while (<$sock>) {
                 $channel = $1;
                 $text = $2;
 
-                $prefix =~ m/^([^!]+)!([^@]+)@(.+)$/;
-                %sender = ('nickname', $1, 'username', $2, 'hostname', $3);
-
                 if ($text =~ m/^\.0 ([^ ]+)( (.+))?$/) {
 
                         $usercommand = $1;
                         $userparams = $3;
 
-                        if ($usercommand eq 'echo') {
-                                $userparams = $usercommand unless defined $userparams;
+                        if ($usercommand eq 'echo' and defined $userparams) {
+
                                 print $sock "PRIVMSG $channel :$sender{'nickname'} said: $userparams";
+
+                        } elsif ($usercommand eq 'whoami') {
+
+                                print $sock "PRIVMSG $channel :$sender{'nickname'}: You are $sender{'username'} ($sender{'hostname'}).";
+
                         } elsif ($usercommand =~ m/^bye|restart$/) {
+
                                 if ($sender{$owner_type} eq $owner) {
                                         $quit = 'QUIT';
                                         $quit .= " :$userparams" unless not defined $userparams;
@@ -74,6 +79,7 @@ while (<$sock>) {
                                 } else {
                                         print $sock "PRIVMSG $channel :$sender{'nickname'}: Can't touch this!";
                                 }
+
                         }
 
                 }
