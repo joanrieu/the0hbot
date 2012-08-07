@@ -46,12 +46,24 @@ while (<$sock>) {
                 print $sock "JOIN $channel\r\n";
                 $joined = 1;
         } elsif ($command eq "PRIVMSG") {
+
                 $params =~ m/^([^ ]+) :(.+)$/;
                 my $channel = $1;
                 my $text = $2;
+
                 $prefix =~ m/^([^!]+)!([^@]+)@(.+)$/;
                 my %sender = ("nickname", $1, "username", $2, "hostname", $3);
-                print $sock "PRIVMSG $channel :$sender{'nickname'} said: $text\r\n"
+
+                if ($text =~ m/^!([^ ]+) (.+)$/) {
+                        my $usercommand = $1;
+                        my $userparams = $2;
+
+                        if ($usercommand eq "echo") {
+                                print $sock "PRIVMSG $channel :$sender{'nickname'} said: $userparams\r\n";
+                        }
+
+                }
+
         }
 
 }
