@@ -6,6 +6,8 @@ my $nick = "the0hbot";
 my $addr = "irc.afternet.org";
 my $port = 6667;
 my $channel = "#bottest";
+my $owner_type = ""; # nickname / username / hostname
+my $owner = "";
 
 # CODE
 
@@ -60,7 +62,7 @@ while (<$sock>) {
 
                         if ($usercommand eq "echo") {
                                 print $sock "PRIVMSG $channel :$sender{'nickname'} said: $userparams\r\n";
-                        } elsif ($usercommand eq "bye") {
+                        } elsif ($usercommand eq "bye" and $sender{$owner_type} eq $owner) {
                                 if (defined $userparams) {
                                         print $sock "QUIT :$userparams\r\n";
                                 } else {
@@ -68,6 +70,8 @@ while (<$sock>) {
                                 }
                                 $sock->close();
                                 exit;
+                        } elsif ($usercommand eq "bye") {
+                                print $sock "PRIVMSG $channel :$sender{'nickname'}: Can't touch this!\r\n";
                         }
 
                 }
