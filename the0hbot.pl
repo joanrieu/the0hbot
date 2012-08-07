@@ -3,9 +3,9 @@
 # CONFIG
 
 my $nick = "the0hbot";
-my $addr = "irc.afternet.org";
+my $addr = "";
 my $port = 6667;
-my $channel = "#bottest";
+my $channel = "";
 my $owner_type = ""; # nickname / username / hostname
 my $owner = "";
 
