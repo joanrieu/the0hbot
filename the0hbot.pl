@@ -3,8 +3,9 @@
 # CONFIG
 
 my $nick = "the0hbot";
-my $addr = "localhost";
+my $addr = "irc.afternet.org";
 my $port = 6667;
+my $channel = "#bottest";
 
 # CODE
 
@@ -18,38 +19,34 @@ my $sock = new IO::Socket::INET(
 
 die "Could not connect!" unless $sock;
 
-my $state = AUTH;
+print $sock "NICK $nick \r\n";
+print $sock "USER $nick 0 * :$nick\r\n";
 
-my $data;
+while (<$sock>) {
 
-while ($state ne QUIT) {
+        $_ =~ s/^:[^ ]+ //;
+        $_ =~ s/\r?\n$//;
 
-        while ($state ne IDLE) {
-                if ($state eq AUTH) {
-                        print $sock "NICK $nick \r\n";
-                        print $sock "USER $nick 0 * :$nick\r\n";
-                        $state = IDLE;
-                } elsif ($state eq PONG) {
-                        print $sock "PONG $data\r\n";
-                        $state = IDLE;
-                }
-        }
-
-        die "Socket error!" unless $data = <$sock>;
-
-        $data =~ s/^:[^ ]+ //;
-        $data =~ s/\r?\n$//;
-
-        $data =~ m/^([^ ]+)( (.+))?$/;
+        $_ =~ m/^([^ ]+)( (.+))?$/;
         my $command = $1;
-        $data = $3;
+        my $params = $3;
 
-        print "Command: $command\n Params: $data\n";
+        print "Command: $command\n Params: $params\n";
 
         if ($command eq "PING") {
-                $state = PONG;
+                print $sock "PONG $params\r\n";
+        } elsif ($command eq "001") {
+                print $sock "JOIN $channel\r\n";
+                $joined = 1;
+        } elsif ($command eq "PRIVMSG") {
+                $params =~ m/([^ ]+) :(.+)/;
+                my $channel = $1;
+                my $text = $2;
+                print $sock "PRIVMSG $channel :echo: $text\r\n"
         }
 
 }
 
 close($sock);
+
+die "Socket error!";
