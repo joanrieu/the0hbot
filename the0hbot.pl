@@ -24,7 +24,14 @@ print $sock "USER $nick 0 * :$nick\r\n";
 
 while (<$sock>) {
 
-        $_ =~ s/^:[^ ]+ //;
+        print "----\n   Full: $_\n";
+
+        my $prefix = "";
+        if ($_ =~ s/^:([^ ]+) //) {
+                $prefix = $1;
+                print " Prefix: $prefix\n";
+        }
+
         $_ =~ s/\r?\n$//;
 
         $_ =~ m/^([^ ]+)( (.+))?$/;
@@ -39,10 +46,12 @@ while (<$sock>) {
                 print $sock "JOIN $channel\r\n";
                 $joined = 1;
         } elsif ($command eq "PRIVMSG") {
-                $params =~ m/([^ ]+) :(.+)/;
+                $params =~ m/^([^ ]+) :(.+)$/;
                 my $channel = $1;
                 my $text = $2;
-                print $sock "PRIVMSG $channel :echo: $text\r\n"
+                $prefix =~ m/^([^!]+)!([^@]+)@(.+)$/;
+                my %sender = ("nickname", $1, "username", $2, "hostname", $3);
+                print $sock "PRIVMSG $channel :$sender{'nickname'} said: $text\r\n"
         }
 
 }
