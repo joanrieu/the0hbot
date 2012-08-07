@@ -23,31 +23,26 @@ my $sock = new IO::Socket::INET(
 
 die 'Could not connect!' unless $sock;
 
-print $sock "NICK $nick \r\n";
-print $sock "USER $nick 0 * :$nick\r\n";
+$\ = "\r\n";
+
+print $sock "NICK $nick";
+print $sock "USER $nick 0 * :$nick";
 
 while (<$sock>) {
-
-        print "----\n   Full: $_\n";
 
         undef $prefix;
         if ($_ =~ s/^:([^ ]+) //) {
                 $prefix = $1;
-                print " Prefix: $prefix\n";
         }
 
-        $_ =~ s/\r?\n$//;
-
-        $_ =~ m/^([^ ]+)( (.+))?$/;
+        $_ =~ m/^([^ ]+)( ([^\r]+))\r?\n$/;
         $command = $1;
         $params = $3;
 
-        print "Command: $command\n Params: $params\n";
-
         if ($command eq 'PING') {
-                print $sock "PONG $params\r\n";
+                print $sock "PONG $params";
         } elsif ($command eq '001') {
-                print $sock "JOIN $channel\r\n";
+                print $sock "JOIN $channel";
                 $joined = 1;
         } elsif ($command eq 'PRIVMSG') {
 
@@ -65,21 +60,19 @@ while (<$sock>) {
 
                         if ($usercommand eq 'echo') {
                                 $userparams = $usercommand unless defined $userparams;
-                                print $sock "PRIVMSG $channel :$sender{'nickname'} said: $userparams\r\n";
+                                print $sock "PRIVMSG $channel :$sender{'nickname'} said: $userparams";
                         } elsif ($usercommand =~ m/^bye|restart$/) {
                                 if ($sender{$owner_type} eq $owner) {
-                                        if (defined $userparams) {
-                                                print $sock "QUIT :$userparams\r\n";
-                                        } else {
-                                                print $sock "QUIT\r\n";
-                                        }
+                                        $quit = 'QUIT';
+                                        $quit .= " :$userparams" unless not defined $userparams;
+                                        print $sock $quit;
                                         $sock->close();
                                         if ($usercommand eq 'restart') {
                                                 exec($0);
                                         }
                                         exit;
                                 } else {
-                                        print $sock "PRIVMSG $channel :$sender{'nickname'}: Can't touch this!\r\n";
+                                        print $sock "PRIVMSG $channel :$sender{'nickname'}: Can't touch this!";
                                 }
                         }
 
