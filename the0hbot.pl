@@ -10,6 +10,7 @@ $port = 6667;
 $channel = '';
 $owner_type = ''; # nickname / username / hostname
 $owner = '';
+$enemy = 'fBot';
 
 # CODE
 
@@ -82,7 +83,38 @@ while (<$sock>) {
 
                         }
 
+                } elsif ($text =~ m/^\01ACTION kicks $nick(.*)\01$/i) {
+
+                        $suffix = $1;
+
+                        print $sock "NICK hammer";
+                        print $sock "PRIVMSG $channel :\01ACTION nails $sender{'nickname'}$suffix\01";
+                        print $sock "NICK $nick";
+
                 }
+
+        }
+
+        if ($sender{'nickname'} eq $enemy) {
+
+                @verbs = (
+                        'kicks',
+                        'smashes',
+                        'punches',
+                        'destroys'
+                );
+
+                @endings = (
+                        'it\'s super efficient',
+                        'so hard it\'s gonna explode',
+                        'badly',
+                        'yay'
+                );
+
+                $verb = $verbs[rand() * scalar @verbs];
+                $ending = $endings[rand() * scalar @endings];
+
+                print $sock "PRIVMSG $channel :\01ACTION $verb $enemy, $ending!\01";
 
         }
 
