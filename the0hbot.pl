@@ -49,6 +49,7 @@ while (<$server_socket>) {
 
                 $command_parameters =~ m/^([^ ]+) :(.+)$/;
                 $command_channel = $1;
+                $command_channel = $command_sender{'nickname'} if $command_channel eq $bot_nickname;
                 $command_text = $2;
 
                 if ($command_text =~ m/^\.0 ([^ ]+)( (.+))?$/) {
