@@ -14,6 +14,7 @@ $owner_name = '';
 # CODE
 
 use IO::Socket;
+use Safe;
 
 my $server_socket = new IO::Socket::INET(
         PeerAddr => $server_address,
@@ -65,12 +66,18 @@ while (<$server_socket>) {
 
                                 print $server_socket "PRIVMSG $command_channel :$command_sender{'nickname'}: You are $command_sender{'username'} ($command_sender{'hostname'}).";
 
+                        } elsif ($usercommand_name eq 'eval') {
+
+                                $usercommand_reply = (new Safe)->reval($usercommand_parameters);
+                                $usercommand_reply =~ s/\r?\n/ /g;
+                                print $server_socket "PRIVMSG $command_channel :$command_sender{'nickname'}: $usercommand_reply";
+
                         } elsif ($usercommand_name =~ m/^bye|restart$/) {
 
                                 if ($command_sender{$owner_type} eq $owner_name) {
-                                        $reply = 'QUIT';
-                                        $reply .= " :$usercommand_parameters" unless not defined $usercommand_parameters;
-                                        print $server_socket $reply;
+                                        $usercommand_reply = 'QUIT';
+                                        $usercommand_reply .= " :$usercommand_parameters" unless not defined $usercommand_parameters;
+                                        print $server_socket $usercommand_reply;
                                         $server_socket->close();
                                         if ($usercommand_name eq 'restart') {
                                                 exec($0);
