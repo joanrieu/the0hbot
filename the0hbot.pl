@@ -4,12 +4,12 @@
 
 # CONFIG
 
-my $nick = "the0hbot";
-my $addr = "";
-my $port = 6667;
-my $channel = "";
-my $owner_type = ""; # nickname / username / hostname
-my $owner = "";
+$nick = 'the0hbot';
+$addr = '';
+$port = 6667;
+$channel = '';
+$owner_type = ''; # nickname / username / hostname
+$owner = '';
 
 # CODE
 
@@ -21,7 +21,7 @@ my $sock = new IO::Socket::INET(
         Proto => 'tcp',
 );
 
-die "Could not connect!" unless $sock;
+die 'Could not connect!' unless $sock;
 
 print $sock "NICK $nick \r\n";
 print $sock "USER $nick 0 * :$nick\r\n";
@@ -30,7 +30,7 @@ while (<$sock>) {
 
         print "----\n   Full: $_\n";
 
-        my $prefix = "";
+        undef $prefix;
         if ($_ =~ s/^:([^ ]+) //) {
                 $prefix = $1;
                 print " Prefix: $prefix\n";
@@ -39,32 +39,33 @@ while (<$sock>) {
         $_ =~ s/\r?\n$//;
 
         $_ =~ m/^([^ ]+)( (.+))?$/;
-        my $command = $1;
-        my $params = $3;
+        $command = $1;
+        $params = $3;
 
         print "Command: $command\n Params: $params\n";
 
-        if ($command eq "PING") {
+        if ($command eq 'PING') {
                 print $sock "PONG $params\r\n";
-        } elsif ($command eq "001") {
+        } elsif ($command eq '001') {
                 print $sock "JOIN $channel\r\n";
                 $joined = 1;
-        } elsif ($command eq "PRIVMSG") {
+        } elsif ($command eq 'PRIVMSG') {
 
                 $params =~ m/^([^ ]+) :(.+)$/;
-                my $channel = $1;
-                my $text = $2;
+                $channel = $1;
+                $text = $2;
 
                 $prefix =~ m/^([^!]+)!([^@]+)@(.+)$/;
-                my %sender = ("nickname", $1, "username", $2, "hostname", $3);
+                %sender = ('nickname', $1, 'username', $2, 'hostname', $3);
 
                 if ($text =~ m/^\.0 ([^ ]+)( (.+))?$/) {
-                        my $usercommand = $1;
-                        my $userparams = $3;
 
-                        if ($usercommand eq "echo") {
+                        $usercommand = $1;
+                        $userparams = $3;
+
+                        if ($usercommand eq 'echo') {
                                 print $sock "PRIVMSG $channel :$sender{'nickname'} said: $userparams\r\n";
-                        } elsif ($usercommand eq "bye" and $sender{$owner_type} eq $owner) {
+                        } elsif ($usercommand eq 'bye' and $sender{$owner_type} eq $owner) {
                                 if (defined $userparams) {
                                         print $sock "QUIT :$userparams\r\n";
                                 } else {
@@ -72,7 +73,7 @@ while (<$sock>) {
                                 }
                                 $sock->close();
                                 exit;
-                        } elsif ($usercommand eq "bye") {
+                        } elsif ($usercommand eq 'bye') {
                                 print $sock "PRIVMSG $channel :$sender{'nickname'}: Can't touch this!\r\n";
                         }
 
