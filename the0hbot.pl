@@ -54,7 +54,7 @@ while (<$sock>) {
                 $prefix =~ m/^([^!]+)!([^@]+)@(.+)$/;
                 my %sender = ("nickname", $1, "username", $2, "hostname", $3);
 
-                if ($text =~ m/^!([^ ]+)( (.+))?$/) {
+                if ($text =~ m/^\.0 ([^ ]+)( (.+))?$/) {
                         my $usercommand = $1;
                         my $userparams = $3;
 
