@@ -1,5 +1,7 @@
 #!/usr/bin/perl
 
+# Copyright (c) 2012 Joan Rieu
+
 # CONFIG
 
 my $nick = "the0hbot";
