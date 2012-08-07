@@ -54,12 +54,20 @@ while (<$sock>) {
                 $prefix =~ m/^([^!]+)!([^@]+)@(.+)$/;
                 my %sender = ("nickname", $1, "username", $2, "hostname", $3);
 
-                if ($text =~ m/^!([^ ]+) (.+)$/) {
+                if ($text =~ m/^!([^ ]+)( (.+))?$/) {
                         my $usercommand = $1;
-                        my $userparams = $2;
+                        my $userparams = $3;
 
                         if ($usercommand eq "echo") {
                                 print $sock "PRIVMSG $channel :$sender{'nickname'} said: $userparams\r\n";
+                        } elsif ($usercommand eq "bye") {
+                                if (defined $userparams) {
+                                        print $sock "QUIT :$userparams\r\n";
+                                } else {
+                                        print $sock "QUIT\r\n";
+                                }
+                                $sock->close();
+                                exit;
                         }
 
                 }
