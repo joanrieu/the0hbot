@@ -14,6 +14,7 @@ $owner_name = '';
 # CODE
 
 use IO::Socket;
+use IPC::Cmd qw(run);
 use Safe;
 
 my $server_socket = new IO::Socket::INET(
@@ -65,6 +66,16 @@ while (<$server_socket>) {
                         } elsif ($usercommand_name eq 'whoami') {
 
                                 print $server_socket "PRIVMSG $command_channel :$command_sender{'nickname'}: You are $command_sender{'username'} ($command_sender{'hostname'}).";
+
+                        } elsif ($usercommand_name eq 'uname') {
+
+                                run(
+                                        command => "uname -a",
+                                        verbose => 0,
+                                        buffer => \$usercommand_reply
+                                );
+
+                                print $server_socket "PRIVMSG $command_channel :$command_sender{'nickname'}: $usercommand_reply";
 
                         } elsif ($usercommand_name eq 'eval') {
 
