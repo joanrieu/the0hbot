@@ -80,9 +80,16 @@ while (<$server_socket>) {
 
                         } elsif ($usercommand_name eq 'eval') {
 
-                                $usercommand_reply = (new Safe)->reval($usercommand_parameters);
-                                $usercommand_reply =~ s/\r?\n/ /g;
-                                print $server_socket "PRIVMSG $command_channel :$command_sender{'nickname'}: $usercommand_reply";
+                                unless ($usercommand_reply = fork()) {
+                                        $usercommand_reply = (new Safe)->reval($usercommand_parameters);
+                                        $usercommand_reply =~ s/\r?\n/ /g;
+                                        print $server_socket "PRIVMSG $command_channel :$command_sender{'nickname'}: $usercommand_reply";
+                                }
+
+                                sleep(1);
+                                kill HUP => $usercommand_reply;
+                                waitpid($usercommand_reply, 0);
+                                print $server_socket '';
 
                         } elsif ($usercommand_name =~ m/^bye|restart$/) {
 
