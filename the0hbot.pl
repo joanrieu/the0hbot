@@ -16,6 +16,7 @@ $owner_name = '';
 use IO::Socket;
 use IPC::Cmd qw(run);
 use Safe;
+use Time::Local;
 
 my $server_socket = new IO::Socket::INET(
         PeerAddr => $server_address,
@@ -59,7 +60,21 @@ while (<$server_socket>) {
                         $usercommand_name = $1;
                         $usercommand_parameters = $3;
 
-                        if ($usercommand_name eq 'echo' and defined $usercommand_parameters) {
+                        if ($usercommand_name eq 'timeleft') {
+
+                                $end = timelocal(0, 37, 13, 1, 0, 2100); # 2100-1-1 13:37:00 local time (0-based month)
+                                $now = time();
+
+                                $seconds = $end - $now;
+                                $hours = int($seconds / 3600);
+                                $seconds -= $hours * 3600;
+                                $minutes = int($seconds / 60);
+                                $seconds -= $minutes * 60;
+
+                                $timeleft_text = "$hours hours $minutes minutes $seconds seconds left!";
+                                print $server_socket "PRIVMSG $command_channel :$timeleft_text";
+
+                        } elsif ($usercommand_name eq 'echo' and defined $usercommand_parameters) {
 
                                 print $server_socket "PRIVMSG $command_channel :$command_sender{'nickname'} said: $usercommand_parameters";
 
